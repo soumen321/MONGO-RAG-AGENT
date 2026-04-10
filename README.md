@@ -1,46 +1,76 @@
-# mongo-rag-agent
+# MongoDB RAG Agent
 
-This repository documents a production-grade AI agent built to validate knowledge in creating and deploying AI agents with MongoDB.
-It demonstrates a multi-tool Retrieval-Augmented Generation (RAG) architecture that uses MongoDB Atlas for long-term storage, vector search, and tool-based reasoning.
+A production-grade AI agent demonstrating multi-tool Retrieval-Augmented Generation (RAG) architecture using MongoDB Atlas for vector search and persistent memory.
 
-## Why this project?
+## Quick Start
 
-This digital credential confirms expertise in:
-- Building a multi-tool AI agent using MongoDB as the core data platform.
-- Designing agent decision-making that selects the best tool for each user query.
-- Implementing long-term and short-term memory with MongoDB-backed persistence.
-- Vectorizing document collections and embedding queries for semantic retrieval.
+### Prerequisites
+- Python 3.11+
+- MongoDB Atlas account with vector search enabled
+- OpenAI API key
+
+### Installation
+
+1. **Clone and setup environment:**
+   ```bash
+   git clone <repository-url>
+   cd ai-agent-with-mongodb
+   python -m venv .venv
+   .venv\Scripts\activate  # Windows
+   ```
+
+2. **Configure environment variables:**
+   Create a `.env` file:
+   ```env
+   MONGODB_URI=your-mongodb-atlas-connection-string
+   OPENAI_API_KEY=your-openai-api-key
+   ```
+
+3. **Install dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. **Run the agent:**
+   ```bash
+   python main.py
+   ```
+
+### Package Installation (Alternative)
+
+For development or system-wide installation:
+```bash
+pip install -e .
+mongo-rag-agent
+```
 
 ## Architecture Overview
 
-1. **User Input**
-   - A natural language query enters the system through the root launcher or package entrypoint.
+This agent implements a sophisticated RAG system with the following components:
 
-2. **Agent Prompt & Tool Binding**
-   - The agent prompt is constructed using `ChatPromptTemplate` and `MessagesPlaceholder`.
-   - Two tools are bound to the LLM:
-     - `get_information_for_question_answering`
-     - `get_page_content_for_summarization`
+### Core Components
+- **Multi-Tool Agent**: Uses LangGraph for workflow orchestration with tool selection
+- **Vector Search**: MongoDB Atlas vector search for semantic document retrieval
+- **Memory Management**: Persistent conversation state using MongoDB checkpoints
+- **Embedding Pipeline**: OpenAI embeddings optimized for MongoDB vector indexes
 
-3. **MongoDB Atlas Storage**
-   - `chunked_docs` stores the vectorized document chunks and embeddings.
-   - `full_docs` stores full documentation pages for direct summarization lookups.
-   - MongoDB Atlas provides the vector search index and managed database service.
+### Data Flow
+1. User submits natural language query
+2. Query is vectorized using OpenAI embeddings
+3. Agent selects appropriate tool (vector search or document lookup)
+4. MongoDB Atlas performs vector search or document retrieval
+5. Results are synthesized by GPT-4o into final response
+6. Conversation state is checkpointed to MongoDB
 
-4. **Vector Search & Embeddings**
-   - The system uses OpenAI embeddings to vectorize queries and document chunks.
-   - The embeddings model is configured for MongoDB index compatibility.
-   - Vector search is performed using MongoDB's `$vectorSearch` pipeline.
+### Key Technologies
+- **LangChain/LangGraph**: Agent orchestration and tool binding
+- **MongoDB Atlas**: Vector database with managed search indexes
+- **OpenAI**: Embeddings generation and response synthesis
+- **Python 3.11+**: Modern async capabilities
 
-5. **Graph Workflow & Memory**
-   - `langgraph` manages the agent workflow as a state graph.
-   - The graph stores conversation state and tool call cycles.
-   - `MongoDBSaver` persists graph checkpoints to MongoDB for short-term memory and recovery.
+## System Architecture Diagrams
 
-6. **Final Answer**
-   - The agent receives tool observations and returns the final response to the user.
-
-## Data Flow Architecture
+### High-Level Data Flow
 
 ```
 ─────────────────────────────────────────────────────────────────────────────────────┐
@@ -111,51 +141,51 @@ This digital credential confirms expertise in:
     (AI generated)  ───────→  (clean text)  ───────→  (terminal/console)
 ```
 
-## System Flowchart
+### System Flowchart
 
 ```mermaid
 flowchart LR
     %% User Input Layer
-    A([User Query]) --> B([main.py Launcher])
-    B --> C([Add src/ to Python Path])
-    C --> D([Import mongo_rag_agent.app])
+    A[User Query] --> B[main.py Launcher]
+    B --> C[Add src/ to Python Path]
+    C --> D[Import mongo_rag_agent.app]
 
     %% Application Layer
-    D --> E([app.py: main()])
-    E --> F([config.py: Load Environment])
-    E --> G([database.py: Init MongoDB Client])
+    D --> E[app.py: main()]
+    E --> F[config.py: Load Environment]
+    E --> G[database.py: Init MongoDB Client]
 
     %% Core Processing
-    F --> H([embeddings.py: OpenAI Embeddings])
-    G --> I([tools.py: Register Tools])
-    I --> J([get_information_for_question_answering])
-    I --> K([get_page_content_for_summarization])
+    F --> H[embeddings.py: OpenAI Embeddings]
+    G --> I[tools.py: Register Tools]
+    I --> J[get_information_for_question_answering]
+    I --> K[get_page_content_for_summarization]
 
     %% Data Layer
-    J --> L([MongoDB Atlas: chunked_docs])
-    K --> M([MongoDB Atlas: full_docs])
+    J --> L[MongoDB Atlas: chunked_docs]
+    K --> M[MongoDB Atlas: full_docs]
 
     %% Workflow Layer
-    E --> N([graph.py: Init LangGraph])
-    N --> O([StateGraph with MongoDBSaver])
-    O --> P([Agent Node + Tool Node])
+    E --> N[graph.py: Init LangGraph]
+    N --> O[StateGraph with MongoDBSaver]
+    O --> P[Agent Node + Tool Node]
 
     %% Execution Layer
-    E --> Q([execute_graph()])
-    Q --> R([Stream Graph Execution])
-    R --> S([Tool Calls → Observations])
-    S --> T([Final Response])
+    E --> Q[execute_graph()]
+    Q --> R[Stream Graph Execution]
+    R --> S[Tool Calls → Observations]
+    S --> T[Final Response]
 
     %% Data Processing
-    L --> U([Vector Search Pipeline])
-    M --> V([Document Lookup])
-    U --> W([Similarity Scores])
-    V --> X([Page Content])
+    L --> U[Vector Search Pipeline]
+    M --> V[Document Lookup]
+    U --> W[Similarity Scores]
+    V --> X[Page Content]
     W --> S
     X --> S
 
     %% Output
-    T --> Y([Output to User])
+    T --> Y[Output to User]
 
     %% Styling
     classDef userLayer fill:#e8f5e8,stroke:#2e7d32,stroke-width:2px
@@ -173,8 +203,7 @@ flowchart LR
     class Q,R,S,T execLayer
 ```
 
-
-## Component Architecture
+### Component Architecture
 
 ```mermaid
 graph TB
@@ -230,7 +259,7 @@ graph TB
     style UI fill:#e8f5e8
 ```
 
-## Sequence Diagram
+### Sequence Diagram
 
 ```mermaid
 sequenceDiagram
@@ -277,7 +306,7 @@ sequenceDiagram
     Note over O: OpenAI provides<br/>embeddings and LLM
 ```
 
-## State Diagram
+### State Diagram
 
 ```mermaid
 stateDiagram-v2
@@ -304,59 +333,108 @@ stateDiagram-v2
 
 ## Project Structure
 
-- `src/mongo_rag_agent/`
-  - `app.py`: Application orchestration and graph execution.
-  - `config.py`: Environment and secret management.
-  - `database.py`: MongoDB client initialization and collection handling.
-  - `embeddings.py`: OpenAI embedding generation and vector handling.
-  - `tools.py`: Agent tools for vector search and page summarization.
-  - `graph.py`: Graph state, tool routing, and checkpointing.
-- `main.py`: Root launcher for direct local execution.
-- `pyproject.toml`: Package metadata and install configuration.
-- `requirements.txt`: Runtime and development dependencies.
-- `tests/`: Basic package import and smoke tests.
-
-## Setup
-
-1. Clone the repository.
-2. Create a `.env` file with:
-   ```text
-   MONGODB_URI=<your-mongodb-atlas-uri>
-   OPENAI_API_KEY=<your-openai-api-key>
-   ```
-3. Install dependencies:
-   ```bash
-   python -m pip install -r requirements.txt
-   ```
-4. Run the launcher:
-   ```bash
-   python main.py
-   ```
-
-## Package Installation
-
-Install in editable mode for development:
-
-```bash
-pip install -e .
+```
+ai-agent-with-mongodb/
+├── src/
+│   └── mongo_rag_agent/
+│       ├── __init__.py          # Package initialization
+│       ├── app.py               # Main application orchestrator
+│       ├── config.py            # Environment configuration
+│       ├── database.py          # MongoDB client and collections
+│       ├── embeddings.py        # OpenAI embedding generation
+│       ├── tools.py             # Agent tools for RAG operations
+│       └── graph.py             # LangGraph workflow definition
+├── main.py                      # Root launcher script
+├── pyproject.toml               # Package configuration
+├── requirements.txt             # Python dependencies
+├── README.md                    # This documentation
+└── .env                         # Environment variables (create)
 ```
 
-Then run via package entrypoint:
+### Module Descriptions
 
+- **`app.py`**: Central orchestrator that coordinates all components and executes the RAG workflow
+- **`config.py`**: Manages environment variables and API keys securely
+- **`database.py`**: Handles MongoDB Atlas connection and collection management
+- **`embeddings.py`**: Generates vector embeddings using OpenAI API
+- **`tools.py`**: Defines agent tools for vector search and document retrieval
+- **`graph.py`**: Implements the LangGraph state machine with MongoDB persistence
+
+## Configuration
+
+### Environment Variables
+
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `MONGODB_URI` | MongoDB Atlas connection string | Yes |
+| `OPENAI_API_KEY` | OpenAI API key for embeddings and LLM | Yes |
+
+### MongoDB Setup
+
+1. Create a MongoDB Atlas cluster
+2. Enable vector search
+3. Create database `ai_agents` with collections:
+   - `chunked_docs`: Stores vectorized document chunks
+   - `full_docs`: Stores complete documents
+4. Create vector search index on `chunked_docs.embedding` field
+
+## Production Deployment
+
+### Security Considerations
+- Store API keys in secure vaults (AWS Secrets Manager, Azure Key Vault, etc.)
+- Use MongoDB Atlas IP whitelisting and authentication
+- Implement rate limiting for API calls
+- Add input validation and sanitization
+
+### Performance Optimization
+- Enable MongoDB query caching
+- Use connection pooling for MongoDB client
+- Implement embedding caching for repeated queries
+- Add monitoring for vector search latency
+
+### Monitoring & Observability
+- Log tool usage and execution times
+- Monitor MongoDB connection health
+- Track vector search performance metrics
+- Implement structured logging with correlation IDs
+
+### Scaling Considerations
+- Horizontal scaling with multiple MongoDB Atlas clusters
+- Load balancing for embedding generation
+- Caching layer for frequently accessed documents
+- Async processing for long-running queries
+
+## Development
+
+### Running Tests
 ```bash
-mongo-rag-agent
+python -m pytest tests/
 ```
 
-## Production Considerations
+### Code Quality
+```bash
+# Linting
+python -m flake8 src/
 
-- Use MongoDB Atlas for managed vector storage and database reliability.
-- Keep environment variables in a secure vault or secrets store.
-- Add logging and metrics around tool usage, vector search latency, and graph checkpoint writes.
-- Enable `langgraph` checkpoint persistence for agent state recovery.
-- Version the embedding schema and MongoDB vector index together.
+# Type checking
+python -m mypy src/
 
-## Additional Notes
+# Formatting
+python -m black src/
+```
 
-- `main.py` is a lightweight launcher that loads the `src/` package.
-- The architecture separates configuration, database access, embedding logic, tooling, and graph orchestration.
-- This structure supports future extensions such as more tool connectors, dynamic tool selection, and advanced memory management.
+### Contributing
+1. Fork the repository
+2. Create a feature branch
+3. Make changes with tests
+4. Submit a pull request
+
+## License
+
+This project demonstrates AI agent development with MongoDB. See individual component licenses for usage terms.
+
+## Additional Resources
+
+- [MongoDB Atlas Vector Search Documentation](https://docs.mongodb.com/atlas/atlas-vector-search/)
+- [LangGraph Documentation](https://langchain-ai.github.io/langgraph/)
+- [OpenAI Embeddings Guide](https://platform.openai.com/docs/guides/embeddings)
