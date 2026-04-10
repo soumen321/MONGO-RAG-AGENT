@@ -4,13 +4,13 @@
 import os
 from dotenv import load_dotenv
 
-# Load environment variables from .env file
 load_dotenv()
 
-# Environment variable getters
+
 def get_mongodb_uri():
     """Get MongoDB connection URI from environment variables."""
     return os.getenv("MONGODB_URI")
+
 
 def get_openai_api_key():
     """Get OpenAI API key from environment variables."""

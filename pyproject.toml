@@ -1,0 +1,40 @@
+[project]
+name = "mongo-rag-agent"
+version = "0.1.0"
+description = "A MongoDB-backed RAG agent using LangGraph and LangChain."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "langchain",
+    "langchain-openai",
+    "langchain-community",
+    "langchain-text-splitters",
+    "langchain-core",
+    "openai",
+    "python-dotenv",
+    "langgraph",
+    "langgraph-checkpoint-mongodb",
+    "pymongo",
+]
+authors = [
+    { name = "Your Name" },
+]
+classifiers = [
+    "Programming Language :: Python :: 3.11",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.scripts]
+mongo-rag-agent = "mongo_rag_agent.app:main"
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+packages = ["find"]
+
+[tool.setuptools.packages.find]
+where = ["src"]

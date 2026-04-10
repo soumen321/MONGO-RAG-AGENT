@@ -2,8 +2,9 @@
 # Defines the tools available to the RAG agent for information retrieval
 
 from langchain_core.tools import tool
-from database import init_mongodb
-from embeddings import generate_embedding
+from .database import init_mongodb
+from .embeddings import generate_embedding
+
 
 @tool
 def get_information_for_question_answering(user_query: str) -> str:
@@ -18,35 +19,32 @@ def get_information_for_question_answering(user_query: str) -> str:
     """
 
     query_embedding = generate_embedding(user_query)
-
     vs_collection = init_mongodb()[1]
 
     pipeline = [
         {
-            # Use vector search to find similar documents
             "$vectorSearch": {
-                "index": "vector_index",  # Name of the vector index
-                "path": "embedding",       # Field containing the embeddings
-                "queryVector": query_embedding,  # The query embedding to compare against
-                "numCandidates": 150,      # Consider 150 candidates (wider search)
-                "limit": 5,                # Return only top 5 matches
+                "index": "vector_index",
+                "path": "embedding",
+                "queryVector": query_embedding,
+                "numCandidates": 150,
+                "limit": 5,
             }
         },
         {
-            # Project only the fields we need
             "$project": {
-                "_id": 0,                  # Exclude document ID
-                "body": 1,                 # Include the document body
-                "score": {"$meta": "vectorSearchScore"},  # Include the similarity score
+                "_id": 0,
+                "body": 1,
+                "score": {"$meta": "vectorSearchScore"},
             }
         },
     ]
 
     results = vs_collection.aggregate(pipeline)
-
     context = "\n\n".join([doc.get("body") for doc in results])
 
     return context
+
 
 @tool
 def get_page_content_for_summarization(user_query: str) -> str:
@@ -62,12 +60,10 @@ def get_page_content_for_summarization(user_query: str) -> str:
     full_collection = init_mongodb()[2]
 
     query = {"title": user_query}
-
     projection = {"_id": 0, "body": 1}
 
     document = full_collection.find_one(query, projection)
 
     if document:
         return document["body"]
-    else:
-        return "Document not found"
+    return "Document not found"

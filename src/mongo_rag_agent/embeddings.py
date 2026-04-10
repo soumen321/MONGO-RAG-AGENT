@@ -3,7 +3,8 @@
 
 from typing import List
 from langchain_openai import OpenAIEmbeddings
-from config import get_openai_api_key
+from .config import get_openai_api_key
+
 
 def generate_embedding(text: str) -> List[float]:
     """
@@ -18,10 +19,9 @@ def generate_embedding(text: str) -> List[float]:
     embedding_model = OpenAIEmbeddings(
         openai_api_key=get_openai_api_key(),
         model="text-embedding-3-small",
-        dimensions=512
+        dimensions=512,
     )
 
-    # Generate embedding vector
     embedding = embedding_model.embed_query(text)
 
     return embedding
